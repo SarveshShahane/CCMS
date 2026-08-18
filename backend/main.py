@@ -5,11 +5,15 @@ import redis.asyncio as redis
 
 from app.config.db import get_db
 from app.config.redis_conf import get_redis
+from app.routes.file import router as file_router
 
 app = FastAPI(
     title="CCMS API",
     description="Customer Complaint Management System - API",
 )
+
+app.include_router(file_router, prefix="/api/v1")
+
 
 
 @app.get("/health")

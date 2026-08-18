@@ -18,6 +18,7 @@ from app.config.db import Base
 # Import all models for Alembic autogenerate
 import app.models.complaint  # noqa: F401
 import app.models.chat       # noqa: F401
+import app.models.file       # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
