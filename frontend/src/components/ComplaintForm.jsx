@@ -20,6 +20,10 @@ import {
   resetSaveStatus,
 } from '../store/slices/complaintSlice';
 import { setActiveView } from '../store/slices/appSlice';
+import ComplaintCompletenessCard from './ComplaintCompletenessCard';
+import RootCauseRecommendationCard from './RootCauseRecommendationCard';
+import DuplicateComplaintCard from './DuplicateComplaintCard';
+import CapaRiskCard from './CapaRiskCard';
 
 export default function ComplaintForm() {
   const dispatch = useDispatch();
@@ -75,6 +79,28 @@ export default function ComplaintForm() {
           </button>
         </div>
       </div>
+
+      {/* Duplicate Complaint Warning Card */}
+      <div className="mx-6 mt-4">
+        <DuplicateComplaintCard formData={form} />
+      </div>
+
+      {/* Complaint Completeness Card */}
+      <ComplaintCompletenessCard />
+
+      {/* CAPA Plan & AI Risk Classification Advisor Card */}
+      <div className="mx-6 mt-3">
+        <CapaRiskCard formData={form} />
+      </div>
+
+      {/* Root Cause Recommendation Advisor Card */}
+      <div className="mx-6 mt-3">
+        <RootCauseRecommendationCard formData={form} />
+      </div>
+
+
+
+
 
       {/* Success Notification Alert */}
       {saveSuccess && (

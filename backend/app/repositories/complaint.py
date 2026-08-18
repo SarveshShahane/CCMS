@@ -118,3 +118,31 @@ class ComplaintRepository:
         items = list(res.scalars().all())
 
         return items, total
+
+    async def find_candidates_for_duplicate_check(
+        self,
+        batch_number: Optional[str] = None,
+        product_name: Optional[str] = None,
+        exclude_id: Optional[int] = None,
+        limit: int = 50,
+    ) -> List[Complaint]:
+        """Fetches candidate complaints matching batch number or product name."""
+        filters = []
+        if batch_number and batch_number.strip():
+            filters.append(func.lower(Complaint.batch_number) == batch_number.strip().lower())
+        if product_name and product_name.strip():
+            filters.append(func.lower(Complaint.product_name).contains(product_name.strip().lower()))
+
+        if not filters:
+            # Fallback: return recent 50 complaints
+            stmt = select(Complaint).order_by(Complaint.created_at.desc()).limit(limit)
+        else:
+            from sqlalchemy import or_
+            stmt = select(Complaint).where(or_(*filters)).order_by(Complaint.created_at.desc()).limit(limit)
+
+        if exclude_id:
+            stmt = stmt.where(Complaint.id != exclude_id)
+
+        res = await self.db.execute(stmt)
+        return list(res.scalars().all())
+

@@ -25,7 +25,7 @@ const initialFormState = {
   sample_received: false,
 };
 
-// Async Thunk for saving complaint to backend DB
+// Save complaint payload to database
 export const saveComplaintThunk = createAsyncThunk(
   'complaint/saveComplaint',
   async (_, { getState, rejectWithValue }) => {
@@ -34,7 +34,6 @@ export const saveComplaintThunk = createAsyncThunk(
       const payload = {
         ...complaint.form,
         affected_quantity: parseFloat(complaint.form.affected_quantity) || 1,
-        // sanitize dates if empty string
         incident_date: complaint.form.incident_date || null,
         manufacturing_date: complaint.form.manufacturing_date || null,
         expiry_date: complaint.form.expiry_date || null,

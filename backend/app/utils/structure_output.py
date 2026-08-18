@@ -17,104 +17,108 @@ logger = logging.getLogger(__name__)
 
 
 class ComplaintExtractionOutput(BaseModel):
-    """
-    Pydantic schema for structured output extraction from customer complaints.
-    Enforces strict typing and nullability for fields not explicitly mentioned.
-    """
+    """Schema for extracting structured complaint fields from raw input."""
     is_valid_complaint: bool = Field(
         default=True,
         description="True if user input describes a legitimate product quality issue or complaint, False otherwise."
     )
     customer_name: Optional[str] = Field(
         default=None,
-        description="Name of the customer, entity, or pharmacy submitting the complaint (e.g. Apollo Pharmacy). Null if not mentioned."
+        description="Name of customer, pharmacy, or reporting party."
     )
     customer_contact_email: Optional[str] = Field(
         default=None,
-        description="Contact email of the customer or submitter (e.g. quality@apollohealth.com). Null if not mentioned."
+        description="Contact email of customer or submitter."
     )
     customer_contact_phone: Optional[str] = Field(
         default=None,
-        description="Contact phone number of the customer or submitter (e.g. +1-800-555-0199). Null if not mentioned."
+        description="Contact phone number."
     )
     complaint_source: Optional[str] = Field(
         default=None,
-        description="Source type of complaint (e.g., Pharmacy, Hospital, Patient, Distributor). Null if not mentioned."
+        description="Source type (e.g. Pharmacy, Hospital, Patient, Distributor)."
     )
     product_name: Optional[str] = Field(
         default=None,
-        description="Full product name (e.g., Amoxicillin Capsules 500 mg). Null if not mentioned."
+        description="Full drug product name."
     )
     product_code: Optional[str] = Field(
         default=None,
-        description="Product item code or SKU. Null if not mentioned."
+        description="Product item code or SKU."
     )
     dosage_form: Optional[str] = Field(
         default=None,
-        description="Form of product (e.g., Capsules, Tablets, Ointment, Injection). Null if not mentioned."
+        description="Dosage form (e.g. Capsules, Tablets, Ointment, Injection)."
     )
     product_strength: Optional[str] = Field(
         default=None,
-        description="Strength specification (e.g., 500 mg, 10 mg/ml). Null if not mentioned."
+        description="Product strength (e.g. 500 mg, 10 mg/ml)."
     )
     batch_number: Optional[str] = Field(
         default=None,
-        description="Batch or lot identification number (e.g. AMX240602). Null if not mentioned."
+        description="Batch or lot identification number."
     )
     affected_quantity: Optional[float] = Field(
         default=None,
-        description="Numerical quantity of affected units. Null if not mentioned."
+        description="Numerical quantity of affected units."
     )
     affected_quantity_unit: Optional[str] = Field(
         default=None,
-        description="Unit for affected quantity (e.g., capsules, packs, bottles). Null if not mentioned."
+        description="Unit for affected quantity."
     )
     complaint_category: Optional[str] = Field(
         default=None,
-        description="Primary defect category (e.g., Discoloration, Packaging, Contamination, Sub-potency). Null if not mentioned."
+        description="Primary defect category (e.g. Discoloration, Packaging, Contamination)."
     )
     title: Optional[str] = Field(
         default=None,
-        description="Brief summary title for the complaint record. Null if not mentioned."
+        description="Brief summary title for the complaint record."
     )
     description: Optional[str] = Field(
         default=None,
-        description="Detailed description of reported problem extracted from input. Null if not mentioned."
+        description="Detailed description of reported problem."
     )
     initial_severity: Optional[str] = Field(
         default=None,
-        description="Initial severity rating: Critical, Major, or Minor. Null if not mentioned."
+        description="Initial severity rating: Critical, Major, or Minor."
     )
     ai_risk_assessment: Optional[str] = Field(
         default=None,
-        description="Concise initial risk assessment analysis generated for the reported complaint. Null if not mentioned."
+        description="Initial risk assessment text."
     )
     ai_suggested_next_action: Optional[str] = Field(
         default=None,
-        description="Recommended next steps for QA/QC team. Null if not mentioned."
+        description="Recommended next steps for QA team."
     )
     manufacturing_date: Optional[str] = Field(
         default=None,
-        description="Manufacturing date string (e.g., March 2026). Null if not mentioned."
+        description="Manufacturing date string."
     )
     expiry_date: Optional[str] = Field(
         default=None,
-        description="Expiry date string (e.g., February 2028). Null if not mentioned."
+        description="Expiry date string."
     )
     incident_date: Optional[str] = Field(
         default=None,
-        description="Date when incident occurred. Null if not mentioned."
+        description="Incident occurrence date."
     )
     response_message: Optional[str] = Field(
         default="Complaint processed and extracted.",
-        description="Natural language summary message to present back to the user."
+        description="Summary message presented to user."
+    )
+    completeness_score: Optional[float] = Field(
+        default=None,
+        description="Completeness percentage (0 to 100)."
+    )
+    missing_fields: Optional[list] = Field(
+        default=None,
+        description="List of key missing critical and important field labels."
     )
 
 
+
 class ComplaintState(TypedDict):
-    """
-    Custom state definition for the LangGraph complaint extraction workflow.
-    """
+    """State dictionary passed between LangGraph nodes."""
     user_input: str
     llm_config: Optional[LLMConfig]
     extracted_output: Optional[ComplaintExtractionOutput]
@@ -122,9 +126,7 @@ class ComplaintState(TypedDict):
 
 
 def _extract_json_payload(text: str) -> dict:
-    """
-    Strips reasoning blocks (like <think>...</think>) and extracts clean JSON dictionary from LLM string output.
-    """
+    """Strips <think> tags and parses JSON payload."""
     clean_text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
     json_match = re.search(r'\{.*\}', clean_text, re.DOTALL)
     if json_match:
@@ -133,9 +135,7 @@ def _extract_json_payload(text: str) -> dict:
 
 
 def _fallback_parse(user_input: str, error_reason: str) -> ComplaintExtractionOutput:
-    """
-    Deterministic fallback when LLM is unavailable or fails.
-    """
+    """Deterministic fallback when LLM is offline or fails."""
     is_basic_valid = len(user_input.strip()) > 10 and any(
         kw in user_input.lower() for kw in ["complaint", "defect", "discolored", "batch", "expired", "report", "capsule", "tablet"]
     )
@@ -158,9 +158,7 @@ def _fallback_parse(user_input: str, error_reason: str) -> ComplaintExtractionOu
 
 
 async def extract_complaint_node(state: ComplaintState) -> dict:
-    """
-    LangGraph Node function that executes LLM extraction logic or fallback logic.
-    """
+    """LangGraph node executing LLM extraction or fallback parser."""
     user_input = state.get("user_input", "")
     llm_config = state.get("llm_config") or LLMConfig()
 
@@ -215,18 +213,14 @@ async def extract_complaint_node(state: ComplaintState) -> dict:
 
 
 class ComplaintStructuredParser:
-    """
-    Utility class combining Pydantic schemas, LangChain, and LangGraph to produce structured output from LLMs.
-    """
+    """LangGraph pipeline for structured complaint extraction."""
 
     def __init__(self, llm_config: Optional[LLMConfig] = None):
         self.llm_config = llm_config or LLMConfig()
         self.graph = self._build_graph()
 
     def _build_graph(self):
-        """
-        Builds and compiles the LangGraph StateGraph.
-        """
+        """Compiles the LangGraph StateGraph workflow."""
         workflow = StateGraph(ComplaintState)
         workflow.add_node("extract_complaint", extract_complaint_node)
         workflow.add_edge(START, "extract_complaint")
@@ -234,24 +228,13 @@ class ComplaintStructuredParser:
         return workflow.compile()
 
     def _extract_json_payload(self, text: str) -> dict:
-        """
-        Backward-compatible helper proxy method.
-        """
         return _extract_json_payload(text)
 
     def _fallback_parse(self, user_input: str, error_reason: str) -> ComplaintExtractionOutput:
-        """
-        Backward-compatible helper proxy method.
-        """
         return _fallback_parse(user_input, error_reason)
 
     async def parse_complaint(self, user_input: str) -> ComplaintExtractionOutput:
-        """
-        Parses raw complaint text into a structured ComplaintExtractionOutput Pydantic object using LangGraph.
-
-        :param user_input: Raw text string sent by user
-        :return: ComplaintExtractionOutput Pydantic object
-        """
+        """Parses raw complaint text into structured output using LangGraph."""
         initial_state: ComplaintState = {
             "user_input": user_input,
             "llm_config": self.llm_config,
@@ -260,9 +243,17 @@ class ComplaintStructuredParser:
         }
 
         result = await self.graph.ainvoke(initial_state)
-        extracted = result.get("extracted_output")
-        if extracted:
-            return extracted
+        extracted = result.get("extracted_output") or _fallback_parse(user_input, error_reason="LangGraph returned empty output.")
+        
+        try:
+            from app.services.completeness import CompletenessService
+            eval_res = CompletenessService().evaluate(extracted.model_dump())
+            extracted.completeness_score = eval_res.completeness_score
+            missing_labels = [item.label for item in (eval_res.missing_critical + eval_res.missing_important)]
+            extracted.missing_fields = missing_labels
+        except Exception as exc:
+            logger.warning(f"Failed to calculate completeness score for extraction: {exc}")
 
-        return _fallback_parse(user_input, error_reason="LangGraph returned empty output.")
+        return extracted
+
 

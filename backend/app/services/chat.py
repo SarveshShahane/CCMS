@@ -25,24 +25,15 @@ logger = logging.getLogger(__name__)
 
 
 class ChatService:
-    """
-    Class-based service layer for managing chat sessions, message dispatching,
-    and LLM complaint extraction.
-    Follows the architectural structure of FileService.
-    """
+    """Manages chat sessions and LLM complaint extraction."""
 
     def __init__(self, db: AsyncSession):
-        """
-        Initialize ChatService with database session and repository.
-        """
         self.db = db
         self.repository = ChatRepository(db)
         self.parser = ComplaintStructuredParser()
 
     async def create_chat(self, req: ChatCreateRequest) -> ChatDetailResponse:
-        """
-        Create a new chat session and insert the initial AI welcome message.
-        """
+        """Creates a new chat session with an initial welcome message."""
         chat_title = req.title.strip() if req.title else "New Complaint Chat"
         
         chat_record = Chat(
@@ -63,18 +54,14 @@ class ChatService:
         return ChatDetailResponse.model_validate(updated_chat)
 
     async def get_chat(self, chat_id: int) -> ChatDetailResponse:
-        """
-        Retrieve a chat session by ID with full message history.
-        """
+        """Fetches chat session details by ID."""
         chat_record = await self.repository.get_by_id(chat_id)
         if not chat_record:
             raise ChatNotFoundException(chat_id)
         return ChatDetailResponse.model_validate(chat_record)
 
     async def list_chats(self, skip: int = 0, limit: int = 50) -> ChatListResponse:
-        """
-        Retrieve a paginated list of all chat sessions.
-        """
+        """Returns paginated chat sessions."""
         chats = await self.repository.get_all(skip=skip, limit=limit)
         total = await self.repository.count()
 
@@ -86,9 +73,7 @@ class ChatService:
         )
 
     async def delete_chat(self, chat_id: int) -> ChatDeleteResponse:
-        """
-        Delete a chat session and all associated messages.
-        """
+        """Deletes a chat session and its history."""
         chat_record = await self.repository.get_by_id(chat_id)
         if not chat_record:
             raise ChatNotFoundException(chat_id)
@@ -104,14 +89,7 @@ class ChatService:
     async def send_message(
         self, chat_id: int, message_input: ChatMessageCreate
     ) -> SendMessageResponse:
-        """
-        Process a user message in a chat session:
-        1. Validate chat session exists.
-        2. Persist user message to database.
-        3. Invoke LangChain LLM structured complaint parser with strict guardrails.
-        4. Persist AI response message with structured output in `extra_data`.
-        5. Auto-update chat title if appropriate.
-        """
+        """Saves user message, triggers structured LLM extraction, and stores AI reply."""
         chat_record = await self.repository.get_by_id(chat_id)
         if not chat_record:
             raise ChatNotFoundException(chat_id)
@@ -150,3 +128,4 @@ class ChatService:
             ai_message=ChatMessageResponse.model_validate(saved_ai_msg),
             extracted_data=extracted_data,
         )
+

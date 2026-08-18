@@ -37,3 +37,28 @@ class ComplaintService:
             skip=skip,
             limit=limit,
         )
+
+    async def update_rca_capa(
+        self,
+        complaint_id: int,
+        root_cause_category: Optional[str] = None,
+        investigation_findings: Optional[str] = None,
+        capa_required: bool = False,
+        capa_details: Optional[str] = None,
+    ) -> Optional[ComplaintResponse]:
+        """Updates RCA and CAPA investigation metadata on a complaint record."""
+        complaint = await self.repo.get_by_id(complaint_id)
+        if not complaint:
+            return None
+        if root_cause_category is not None:
+            complaint.root_cause_category = root_cause_category
+        if investigation_findings is not None:
+            complaint.investigation_findings = investigation_findings
+        complaint.capa_required = capa_required
+        if capa_details is not None:
+            complaint.capa_details = capa_details
+        
+        await self.repo.db.commit()
+        await self.repo.db.refresh(complaint)
+        return ComplaintResponse.model_validate(complaint)
+

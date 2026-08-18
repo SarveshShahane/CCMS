@@ -134,7 +134,68 @@ export const complaintApi = {
     getComplaint: async (complaintId) => {
         return await apiClient.get(`/complaints/${complaintId}`);
     },
+
+
+    checkCompleteness: async (formData, generateEmail = true) => {
+        return await apiClient.post('/complaints/check-completeness', {
+            form_data: formData,
+            generate_email: generateEmail,
+        });
+    },
+
+
+    getSavedComplaintCompleteness: async (complaintId, generateEmail = true) => {
+        return await apiClient.get(`/complaints/${complaintId}/completeness`, {
+            params: { generate_email: generateEmail },
+        });
+    },
+
+
+    recommendRootCause: async (formData) => {
+        return await apiClient.post('/complaints/recommend-root-cause', {
+            form_data: formData,
+        });
+    },
+
+
+    recommendSavedRootCause: async (complaintId) => {
+        return await apiClient.post(`/complaints/${complaintId}/recommend-root-cause`);
+    },
+
+
+    updateComplaintRcaCapa: async (complaintId, payload) => {
+        return await apiClient.patch(`/complaints/${complaintId}/rca-capa`, payload);
+    },
+
+
+    checkDuplicates: async (formData, excludeComplaintId = null) => {
+        return await apiClient.post('/complaints/check-duplicates', {
+            form_data: formData,
+            exclude_complaint_id: excludeComplaintId,
+        });
+    },
+
+
+    getSavedComplaintDuplicates: async (complaintId) => {
+        return await apiClient.get(`/complaints/${complaintId}/duplicates`);
+    },
+
+
+    evaluateCapaRisk: async (formData) => {
+        return await apiClient.post('/complaints/evaluate-capa-risk', {
+            form_data: formData,
+        });
+    },
+
+
+    getSavedComplaintCapaRisk: async (complaintId) => {
+        return await apiClient.get(`/complaints/${complaintId}/evaluate-capa-risk`);
+    },
 };
+
+
+
+
 
 export default {
     client: apiClient,

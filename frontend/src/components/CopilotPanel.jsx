@@ -180,10 +180,26 @@ export default function CopilotPanel() {
                   if (extData && extData.is_valid_complaint) {
                     return (
                       <div className="mt-2.5 p-2.5 bg-teal-50/80 rounded-xl border border-teal-200/80 text-[11px] space-y-1.5 text-slate-700">
-                        <div className="font-bold text-teal-900 flex items-center gap-1">
-                          <Sparkles className="h-3 w-3 text-teal-600" />
-                          Extracted Structured Fields:
+                        <div className="flex items-center justify-between">
+                          <div className="font-bold text-teal-900 flex items-center gap-1">
+                            <Sparkles className="h-3 w-3 text-teal-600" />
+                            Extracted Structured Fields:
+                          </div>
+                          {extData.completeness_score !== undefined && extData.completeness_score !== null && (
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                extData.completeness_score >= 80
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                  : extData.completeness_score >= 50
+                                  ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                                  : 'bg-rose-100 text-rose-800 border border-rose-300'
+                              }`}
+                            >
+                              Completeness: {extData.completeness_score}%
+                            </span>
+                          )}
                         </div>
+
                         <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
                           {extData.product_name && (
                             <div><span className="font-semibold">Product:</span> {extData.product_name}</div>
@@ -198,11 +214,19 @@ export default function CopilotPanel() {
                             <div><span className="font-semibold">Severity:</span> {extData.initial_severity}</div>
                           )}
                         </div>
+
+                        {extData.missing_fields && extData.missing_fields.length > 0 && (
+                          <div className="pt-1 border-t border-teal-200/50 text-[10px]">
+                            <span className="font-semibold text-rose-700">Missing Details: </span>
+                            <span className="text-slate-600">{extData.missing_fields.join(', ')}</span>
+                          </div>
+                        )}
                       </div>
                     );
                   }
                   return null;
                 })()}
+
               </div>
 
               <span className="text-[10px] text-slate-400 px-1">

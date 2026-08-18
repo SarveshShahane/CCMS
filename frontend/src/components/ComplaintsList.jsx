@@ -27,8 +27,14 @@ import {
 } from 'lucide-react';
 import { complaintApi } from '../api/api';
 import { setActiveView } from '../store/slices/appSlice';
+import RootCauseRecommendationCard from './RootCauseRecommendationCard';
+import DuplicateComplaintCard from './DuplicateComplaintCard';
+import CapaRiskCard from './CapaRiskCard';
 
 export default function ComplaintsList() {
+
+
+
   const dispatch = useDispatch();
   const [complaints, setComplaints] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -39,6 +45,7 @@ export default function ComplaintsList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [completenessFilter, setCompletenessFilter] = useState('ALL');
 
   // Pagination
   const [page, setPage] = useState(0);
@@ -46,6 +53,27 @@ export default function ComplaintsList() {
 
   // Selected Complaint for Modal
   const [selectedComplaint, setSelectedComplaint] = useState(null);
+
+  // Helper calculation for item completeness score
+  const calcItemCompleteness = (item) => {
+    let score = 0;
+    if (item.product_name?.trim()) score += 10;
+    if (item.batch_number?.trim()) score += 10;
+    if (item.description?.trim()) score += 10;
+    if (item.complaint_category?.trim()) score += 10;
+    if (parseFloat(item.affected_quantity) > 0) score += 10;
+    if (item.customer_name?.trim()) score += 7;
+    if (item.customer_contact_email?.trim() || item.customer_contact_phone?.trim()) score += 7;
+    if (item.dosage_form?.trim()) score += 7;
+    if (item.product_strength?.trim()) score += 7;
+    if (item.incident_date) score += 7;
+    if (item.manufacturing_date) score += 3;
+    if (item.expiry_date) score += 3;
+    if (item.product_code?.trim()) score += 3;
+    if (item.complaint_source?.trim()) score += 3;
+    if (item.sample_received) score += 3;
+    return Math.min(100, Math.round(score));
+  };
 
   // Fetch complaints from API
   const fetchComplaints = async () => {
@@ -91,9 +119,17 @@ export default function ComplaintsList() {
         categoryFilter === 'ALL' ||
         item.complaint_category?.toUpperCase() === categoryFilter.toUpperCase();
 
-      return matchesSearch && matchesSeverity && matchesCategory;
+      // Completeness matching
+      const score = calcItemCompleteness(item);
+      const matchesCompleteness =
+        completenessFilter === 'ALL' ||
+        (completenessFilter === 'READY' && score >= 80) ||
+        (completenessFilter === 'INCOMPLETE' && score < 80);
+
+      return matchesSearch && matchesSeverity && matchesCategory && matchesCompleteness;
     });
-  }, [complaints, searchQuery, severityFilter, categoryFilter]);
+  }, [complaints, searchQuery, severityFilter, categoryFilter, completenessFilter]);
+
 
   // Stats calculation
   const stats = useMemo(() => {
@@ -238,23 +274,37 @@ export default function ComplaintsList() {
           )}
         </div>
 
-        {/* Severity Filter Tabs */}
-        <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-          {['ALL', 'CRITICAL', 'MAJOR', 'MINOR'].map((sev) => (
-            <button
-              key={sev}
-              onClick={() => setSeverityFilter(sev)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                severityFilter === sev
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
-              }`}
-            >
-              {sev === 'ALL' ? 'All Severities' : sev.charAt(0) + sev.slice(1).toLowerCase()}
-            </button>
-          ))}
+        {/* Completeness & Severity Filter Controls */}
+        <div className="flex items-center gap-2.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+          <select
+            value={completenessFilter}
+            onChange={(e) => setCompletenessFilter(e.target.value)}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
+          >
+            <option value="ALL">All Completeness</option>
+            <option value="READY">{"Ready (>=80%)"}</option>
+            <option value="INCOMPLETE">{"Incomplete (<80%)"}</option>
+          </select>
+
+
+          <div className="flex items-center gap-1">
+            {['ALL', 'CRITICAL', 'MAJOR', 'MINOR'].map((sev) => (
+              <button
+                key={sev}
+                onClick={() => setSeverityFilter(sev)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  severityFilter === sev
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                }`}
+              >
+                {sev === 'ALL' ? 'All Severities' : sev.charAt(0) + sev.slice(1).toLowerCase()}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
+
 
       {/* Main Content Table / List */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
@@ -314,56 +364,79 @@ export default function ComplaintsList() {
                   <th className="py-3.5 px-4">Product & Batch</th>
                   <th className="py-3.5 px-4">Title / Category</th>
                   <th className="py-3.5 px-4">Customer / Source</th>
+                  <th className="py-3.5 px-4">Completeness</th>
                   <th className="py-3.5 px-4">Severity</th>
                   <th className="py-3.5 px-4">Date</th>
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/70 text-xs text-slate-700">
-                {filteredComplaints.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
-                    onClick={() => setSelectedComplaint(item)}
-                  >
-                    <td className="py-3.5 px-4 font-mono font-bold text-teal-700 whitespace-nowrap">
-                      {item.complaint_number}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-900">{item.product_name || 'N/A'}</div>
-                      <div className="text-[11px] text-slate-400 font-mono">
-                        Batch: {item.batch_number || 'N/A'}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 max-w-xs">
-                      <div className="font-medium text-slate-800 truncate">{item.title || 'Untitled Complaint'}</div>
-                      <div className="text-[11px] text-slate-500 font-medium">
-                        {item.complaint_category || 'General'}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="font-medium text-slate-800">{item.customer_name || 'Anonymous'}</div>
-                      <div className="text-[11px] text-slate-400">{item.complaint_source || 'Direct'}</div>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">{getSeverityBadge(item.initial_severity)}</td>
-                    <td className="py-3.5 px-4 whitespace-nowrap text-slate-500">
-                      {item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'}
-                    </td>
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedComplaint(item);
-                        }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-colors cursor-pointer"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredComplaints.map((item) => {
+                  const score = calcItemCompleteness(item);
+                  return (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                      onClick={() => setSelectedComplaint(item)}
+                    >
+                      <td className="py-3.5 px-4 font-mono font-bold text-teal-700 whitespace-nowrap">
+                        {item.complaint_number}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="font-semibold text-slate-900">{item.product_name || 'N/A'}</div>
+                        <div className="text-[11px] text-slate-400 font-mono">
+                          Batch: {item.batch_number || 'N/A'}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 max-w-xs">
+                        <div className="font-medium text-slate-800 truncate">{item.title || 'Untitled Complaint'}</div>
+                        <div className="text-[11px] text-slate-500 font-medium">
+                          {item.complaint_category || 'General'}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="font-medium text-slate-800">{item.customer_name || 'Anonymous'}</div>
+                        <div className="text-[11px] text-slate-400">{item.complaint_source || 'Direct'}</div>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                            score >= 80
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                              : score >= 50
+                              ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                              : 'bg-rose-50 text-rose-700 border border-rose-200'
+                          }`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              score >= 80 ? 'bg-emerald-500' : score >= 50 ? 'bg-amber-500' : 'bg-rose-500'
+                            }`}
+                          />
+                          {score}% {score >= 80 ? 'Ready' : 'Incomplete'}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">{getSeverityBadge(item.initial_severity)}</td>
+                      <td className="py-3.5 px-4 whitespace-nowrap text-slate-500">
+                        {item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedComplaint(item);
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-colors cursor-pointer"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
+
             </table>
           </div>
         )}
@@ -538,6 +611,30 @@ export default function ComplaintsList() {
                   {selectedComplaint.description || 'No detailed description provided.'}
                 </div>
               </div>
+
+              {/* CAPA Plan & AI Risk Classification Advisor Card */}
+              <CapaRiskCard
+                formData={selectedComplaint}
+                complaintId={selectedComplaint.id}
+                onSynced={() => fetchComplaints()}
+              />
+
+              {/* AI Root Cause Recommendation Advisor Card */}
+              <RootCauseRecommendationCard
+                formData={selectedComplaint}
+                complaintId={selectedComplaint.id}
+                onApplied={() => fetchComplaints()}
+              />
+
+
+              {/* Duplicate Complaints Warning Card */}
+              <DuplicateComplaintCard
+                formData={selectedComplaint}
+                complaintId={selectedComplaint.id}
+                onSelectMatch={(matchedItem) => setSelectedComplaint(matchedItem)}
+              />
+
+
 
               {/* Dates & Customer Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

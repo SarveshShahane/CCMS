@@ -18,25 +18,19 @@ from app.exceptions.file import (
 
 
 class FileService:
-    """
-    Service layer for managing file upload, retrieval, download, and deletion.
-    Enforces format permissions, size limits (10 MB), and file storage operations.
-    """
+    """Manages file uploads, size validation, storage, and background text parsing."""
 
     ALLOWED_EXTENSIONS = {"pdf", "docx", "txt", "eml"}
     MAX_FILE_SIZE = 10 * 1024 * 1024  
 
     def __init__(self, db: AsyncSession, upload_dir: Optional[Path | str] = None):
-        """
-        Initialize FileService with database dependency and file repository.
-        """
         self.db = db
         self.repository = FileRepository(db)
         self.upload_dir = Path(upload_dir or "uploads/files")
         self.upload_dir.mkdir(parents=True, exist_ok=True)
 
     def _get_extension(self, filename: str) -> str:
-        """Extract and normalize lowercase file extension without leading dot."""
+        """Extracts lowercase file extension without dot."""
         if "." in filename:
             return filename.rsplit(".", 1)[-1].lower().strip()
         return ""
@@ -47,15 +41,7 @@ class FileService:
         complaint_id: Optional[int] = None,
         chat_id: Optional[int] = None,
     ) -> FileResponse:
-        """
-        Validate and upload a file.
-        
-        - Validates file extension against allowed formats (pdf, docx, txt, eml).
-        - Validates maximum file size limit (10 MB).
-        - Saves physical file with unique UUID name to disk storage.
-        - Saves file metadata record to database with status 'PENDING'.
-        - Enqueues background ARQ task for text extraction (PyPDFLoader) & LLM processing.
-        """
+        """Validates, stores file on disk, and queues background processing."""
         original_filename = file.filename or "unnamed_file"
         extension = self._get_extension(original_filename)
 
