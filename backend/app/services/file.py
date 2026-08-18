@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.file import FileAttachment
 from app.repositories.file import FileRepository
 from app.schemas.file import FileResponse, FileListResponse, FileDeleteResponse
+from app.jobs.worker import enqueue_file_processing
 from app.exceptions.file import (
     FileNotFoundException,
     InvalidFileExtensionException,
@@ -52,7 +53,8 @@ class FileService:
         - Validates file extension against allowed formats (pdf, docx, txt, eml).
         - Validates maximum file size limit (10 MB).
         - Saves physical file with unique UUID name to disk storage.
-        - Saves file metadata record to database.
+        - Saves file metadata record to database with status 'PENDING'.
+        - Enqueues background ARQ task for text extraction (PyPDFLoader) & LLM processing.
         """
         original_filename = file.filename or "unnamed_file"
         extension = self._get_extension(original_filename)
@@ -81,11 +83,15 @@ class FileService:
             content_type=file.content_type or "application/octet-stream",
             file_size=file_size,
             extension=extension,
+            status="PENDING",
             complaint_id=complaint_id,
             chat_id=chat_id,
         )
 
         saved_file = await self.repository.create(file_record)
+
+        await enqueue_file_processing(saved_file.id)
+
         return FileResponse.model_validate(saved_file)
 
     async def get_file_metadata(self, file_id: int) -> FileResponse:

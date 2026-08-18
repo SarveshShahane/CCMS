@@ -20,6 +20,9 @@ class FileResponse(FileBase):
     id: int = Field(..., description="Unique file ID")
     stored_filename: str = Field(..., description="Unique internal storage filename")
     file_path: str = Field(..., description="Server relative storage path")
+    status: str = Field("PENDING", description="Background processing status: PENDING, PROCESSING, COMPLETED, FAILED")
+    extracted_text: Optional[str] = Field(None, description="Extracted text from PDF or document")
+    processing_error: Optional[str] = Field(None, description="Error message if background processing failed")
     created_at: datetime = Field(..., description="Timestamp when file was uploaded")
     updated_at: datetime = Field(..., description="Timestamp when file record was last updated")
 

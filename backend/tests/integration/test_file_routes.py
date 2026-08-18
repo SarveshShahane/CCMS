@@ -32,8 +32,9 @@ def async_client(file_service):
 
 
 @pytest.mark.asyncio
-async def test_upload_file_success(async_client, file_service, tmp_path):
+async def test_upload_file_success(async_client, file_service, tmp_path, monkeypatch):
     """Test successful upload of a valid file via POST /api/v1/files/upload."""
+    monkeypatch.setattr("app.services.file.enqueue_file_processing", AsyncMock(return_value="job_123"))
     now = datetime.now(timezone.utc)
     mock_file_record = FileAttachment(
         id=101,
@@ -43,6 +44,7 @@ async def test_upload_file_success(async_client, file_service, tmp_path):
         content_type="application/pdf",
         file_size=128,
         extension="pdf",
+        status="PENDING",
         complaint_id=42,
         chat_id=None,
         created_at=now,
@@ -102,6 +104,7 @@ async def test_get_file_metadata_success(async_client, file_service, tmp_path):
         content_type="text/plain",
         file_size=64,
         extension="txt",
+        status="PENDING",
         complaint_id=15,
         chat_id=None,
         created_at=now,
@@ -145,6 +148,7 @@ async def test_download_file_success(async_client, file_service, tmp_path):
         content_type="application/pdf",
         file_size=len(b"%PDF-1.4 test download content"),
         extension="pdf",
+        status="PENDING",
         created_at=now,
         updated_at=now,
     )
@@ -170,6 +174,7 @@ async def test_list_files_success(async_client, file_service, tmp_path):
             content_type="application/pdf",
             file_size=100,
             extension="pdf",
+            status="PENDING",
             created_at=now,
             updated_at=now,
         ),
@@ -181,6 +186,7 @@ async def test_list_files_success(async_client, file_service, tmp_path):
             content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             file_size=200,
             extension="docx",
+            status="PENDING",
             created_at=now,
             updated_at=now,
         ),
@@ -213,6 +219,7 @@ async def test_delete_file_success(async_client, file_service, tmp_path):
         content_type="message/rfc822",
         file_size=22,
         extension="eml",
+        status="PENDING",
         created_at=now,
         updated_at=now,
     )

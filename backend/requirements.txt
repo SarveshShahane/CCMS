@@ -16,7 +16,7 @@ alembic
 
 redis[hiredis]
 arq
-
+pypdf
 
 pytest
 pytest-asyncio

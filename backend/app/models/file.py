@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import String, Integer, DateTime, ForeignKey, func
+from sqlalchemy import String, Integer, DateTime, Text, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.config.db import Base
@@ -23,6 +23,10 @@ class FileAttachment(Base):
     content_type: Mapped[str] = mapped_column(String(100), nullable=False)
     file_size: Mapped[int] = mapped_column(Integer, nullable=False)
     extension: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(50), default="PENDING", index=True, nullable=False)
+
+    extracted_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    processing_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     complaint_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("complaints.id", ondelete="SET NULL"), nullable=True, index=True

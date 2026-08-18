@@ -42,9 +42,12 @@ async def test_upload_file_too_large(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_upload_valid_file_success(tmp_path):
+async def test_upload_valid_file_success(tmp_path, monkeypatch):
     mock_db = AsyncMock()
     service = FileService(db=mock_db, upload_dir=tmp_path)
+
+    mock_enqueue = AsyncMock(return_value="mock_job_id")
+    monkeypatch.setattr("app.services.file.enqueue_file_processing", mock_enqueue)
 
     mock_file = AsyncMock(spec=UploadFile)
     mock_file.filename = "test_complaint.pdf"
@@ -60,6 +63,7 @@ async def test_upload_valid_file_success(tmp_path):
         content_type="application/pdf",
         file_size=len(b"PDF dummy content"),
         extension="pdf",
+        status="PENDING",
         complaint_id=10,
         chat_id=None,
         created_at=now,
@@ -73,7 +77,9 @@ async def test_upload_valid_file_success(tmp_path):
     assert response.filename == "test_complaint.pdf"
     assert response.extension == "pdf"
     assert response.complaint_id == 10
+    assert response.status == "PENDING"
     service.repository.create.assert_called_once()
+    mock_enqueue.assert_called_once_with(1)
 
 
 @pytest.mark.asyncio

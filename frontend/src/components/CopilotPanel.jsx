@@ -175,28 +175,34 @@ export default function CopilotPanel() {
                 <div className="whitespace-pre-wrap">{msg.content}</div>
 
                 {/* Render Structured Extraction Card if returned */}
-                {!isUser && msg.extracted_data && msg.extracted_data.is_valid_complaint && (
-                  <div className="mt-2.5 p-2.5 bg-teal-50/80 rounded-xl border border-teal-200/80 text-[11px] space-y-1.5 text-slate-700">
-                    <div className="font-bold text-teal-900 flex items-center gap-1">
-                      <Sparkles className="h-3 w-3 text-teal-600" />
-                      Extracted Structured Fields:
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
-                      {msg.extracted_data.product_name && (
-                        <div><span className="font-semibold">Product:</span> {msg.extracted_data.product_name}</div>
-                      )}
-                      {msg.extracted_data.batch_number && (
-                        <div><span className="font-semibold">Batch:</span> {msg.extracted_data.batch_number}</div>
-                      )}
-                      {msg.extracted_data.customer_name && (
-                        <div><span className="font-semibold">Customer:</span> {msg.extracted_data.customer_name}</div>
-                      )}
-                      {msg.extracted_data.initial_severity && (
-                        <div><span className="font-semibold">Severity:</span> {msg.extracted_data.initial_severity}</div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {!isUser && (() => {
+                  const extData = msg.extracted_data || msg.extra_data;
+                  if (extData && extData.is_valid_complaint) {
+                    return (
+                      <div className="mt-2.5 p-2.5 bg-teal-50/80 rounded-xl border border-teal-200/80 text-[11px] space-y-1.5 text-slate-700">
+                        <div className="font-bold text-teal-900 flex items-center gap-1">
+                          <Sparkles className="h-3 w-3 text-teal-600" />
+                          Extracted Structured Fields:
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
+                          {extData.product_name && (
+                            <div><span className="font-semibold">Product:</span> {extData.product_name}</div>
+                          )}
+                          {extData.batch_number && (
+                            <div><span className="font-semibold">Batch:</span> {extData.batch_number}</div>
+                          )}
+                          {extData.customer_name && (
+                            <div><span className="font-semibold">Customer:</span> {extData.customer_name}</div>
+                          )}
+                          {extData.initial_severity && (
+                            <div><span className="font-semibold">Severity:</span> {extData.initial_severity}</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
 
               <span className="text-[10px] text-slate-400 px-1">

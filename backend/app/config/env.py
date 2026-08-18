@@ -16,8 +16,8 @@ class Settings:
             f"postgresql+asyncpg://{self.postgre_user}:{self.postgre_password}@{self.postgre_host}:{self.postgre_port}/{self.postgre_db}",
         )
         
-        self.redis_host: str = os.getenv("REDIS_HOST")
-        self.redis_port: int = int(os.getenv("REDIS_PORT"))
+        self.redis_host: str = os.getenv("REDIS_HOST", "127.0.0.1")
+        self.redis_port: int = int(os.getenv("REDIS_PORT", "6379"))
         self.redis_url: str = os.getenv(
             "REDIS_URL",
             f"redis://{self.redis_host}:{self.redis_port}",
