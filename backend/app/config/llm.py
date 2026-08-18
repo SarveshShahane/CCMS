@@ -43,7 +43,7 @@ class LLMConfig:
             "temperature": temperature if temperature is not None else self.temperature,
         }
 
-        tokens = max_tokens if max_tokens is not None else self.max_tokens
+        tokens = max_tokens if max_tokens is not None else (self.max_tokens or 4096)
         if tokens is not None:
             init_kwargs["max_tokens"] = tokens
 
