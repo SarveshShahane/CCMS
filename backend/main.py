@@ -6,6 +6,7 @@ import redis.asyncio as redis
 from app.config.db import get_db
 from app.config.redis_conf import get_redis
 from app.routes.file import router as file_router
+from app.routes.chat import router as chat_router
 
 app = FastAPI(
     title="CCMS API",
@@ -13,6 +14,7 @@ app = FastAPI(
 )
 
 app.include_router(file_router, prefix="/api/v1")
+app.include_router(chat_router, prefix="/api/v1")
 
 
 

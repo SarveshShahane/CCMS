@@ -23,6 +23,14 @@ class Settings:
             f"redis://{self.redis_host}:{self.redis_port}",
         )
 
+        self.groq_api_key: str = os.getenv("GROQ_API_KEY")
+        self.llm_model: str = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
+        self.llm_temperature: float = float(os.getenv("LLM_TEMPERATURE", "0.7"))
+        self.llm_max_tokens: int | None = (
+            int(os.getenv("LLM_MAX_TOKENS")) if os.getenv("LLM_MAX_TOKENS") else None
+        )
+
+
 
 settings = Settings()
 
