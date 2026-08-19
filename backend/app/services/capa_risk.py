@@ -167,6 +167,14 @@ class CapaRiskService:
         """
         Evaluates complaint payload and returns unified Executive Summary, Risk Classification, and CAPA Plan.
         """
+        product_name = str(form_data.get("product_name") or "").strip()
+        description = str(form_data.get("description") or "").strip()
+        title = str(form_data.get("title") or "").strip()
+        batch_number = str(form_data.get("batch_number") or "").strip()
+
+        if not any([product_name, description, title, batch_number]):
+            raise ValueError("Complaint form is empty. Please provide at least a Product Name, Title, or Description before evaluating CAPA & Risk.")
+
         try:
             llm_client = self.llm_config.get_llm()
             prompt = ChatPromptTemplate.from_messages([

@@ -145,7 +145,7 @@ export default function ComplaintCompletenessCard() {
   };
 
   return (
-    <div className={`mx-6 mt-4 rounded-xl border transition-all duration-200 ${comp.statusBg}`}>
+    <div className={`rounded-xl border transition-all duration-200 ${comp.statusBg}`}>
       {/* Header bar */}
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">

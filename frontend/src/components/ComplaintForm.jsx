@@ -80,73 +80,65 @@ export default function ComplaintForm() {
         </div>
       </div>
 
-      {/* Duplicate Complaint Warning Card */}
-      <div className="mx-6 mt-4">
-        <DuplicateComplaintCard formData={form} />
-      </div>
-
-      {/* Complaint Completeness Card */}
-      <ComplaintCompletenessCard />
-
-      {/* CAPA Plan & AI Risk Classification Advisor Card */}
-      <div className="mx-6 mt-3">
-        <CapaRiskCard formData={form} />
-      </div>
-
-      {/* Root Cause Recommendation Advisor Card */}
-      <div className="mx-6 mt-3">
-        <RootCauseRecommendationCard formData={form} />
-      </div>
-
-
-
-
-
-      {/* Success Notification Alert */}
-      {saveSuccess && (
-        <div className="mx-6 mt-4 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start justify-between text-emerald-800 text-xs shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-            <div>
-              <p className="font-bold text-emerald-900">Complaint Successfully Saved & Logged!</p>
-              <p className="text-emerald-700 font-mono text-[11px] mt-0.5">
-                Reference ID: <span className="font-bold">{lastSavedNumber}</span> • Form reset for new entry.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                dispatch(resetSaveStatus());
-                dispatch(setActiveView('list'));
-              }}
-              className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
-            >
-              View All Complaints
-            </button>
-            <button
-              onClick={() => dispatch(resetSaveStatus())}
-              className="text-emerald-600 hover:text-emerald-900 font-bold ml-2 cursor-pointer"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Error Notification Alert */}
-      {saveError && (
-        <div className="mx-6 mt-4 p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2.5 text-rose-800 text-xs">
-          <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0" />
-          <div>
-            <p className="font-bold text-rose-900">Failed to Save Complaint</p>
-            <p className="text-rose-700">{saveError}</p>
-          </div>
-        </div>
-      )}
-
       {/* Form Content Scrollable Body */}
       <form id="complaintForm" onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Duplicate Complaint Warning Card */}
+        <DuplicateComplaintCard formData={form} />
+
+        {/* Complaint Completeness Card */}
+        <ComplaintCompletenessCard />
+
+        {/* CAPA Plan & AI Risk Classification Advisor Card */}
+        <CapaRiskCard formData={form} />
+
+        {/* Root Cause Recommendation Advisor Card */}
+        <RootCauseRecommendationCard formData={form} />
+
+        {/* Success Notification Alert */}
+        {saveSuccess && (
+          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start justify-between text-emerald-800 text-xs shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+              <div>
+                <p className="font-bold text-emerald-900">Complaint Successfully Saved & Logged!</p>
+                <p className="text-emerald-700 font-mono text-[11px] mt-0.5">
+                  Reference ID: <span className="font-bold">{lastSavedNumber}</span> • Form reset for new entry.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  dispatch(resetSaveStatus());
+                  dispatch(setActiveView('list'));
+                }}
+                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
+              >
+                View All Complaints
+              </button>
+              <button
+                type="button"
+                onClick={() => dispatch(resetSaveStatus())}
+                className="text-emerald-600 hover:text-emerald-900 font-bold ml-2 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Error Notification Alert */}
+        {saveError && (
+          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2.5 text-rose-800 text-xs">
+            <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0" />
+            <div>
+              <p className="font-bold text-rose-900">Failed to Save Complaint</p>
+              <p className="text-rose-700">{saveError}</p>
+            </div>
+          </div>
+        )}
+
         {/* Section 1: Customer & Source Info */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">

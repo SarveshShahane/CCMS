@@ -30,6 +30,19 @@ export default function CapaRiskCard({ formData, complaintId, onSynced }) {
     setIsLoading(true);
     setError(null);
     setSyncSuccess(false);
+
+    const hasEnoughData =
+      formData?.product_name?.trim() ||
+      formData?.description?.trim() ||
+      formData?.title?.trim() ||
+      formData?.batch_number?.trim();
+
+    if (!hasEnoughData && !complaintId) {
+      setIsLoading(false);
+      setError('Form is empty. Please enter a Product Name or Complaint Description before evaluating CAPA & Risk.');
+      return;
+    }
+
     try {
       let data;
       if (complaintId) {

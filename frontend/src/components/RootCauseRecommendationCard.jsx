@@ -28,6 +28,19 @@ export default function RootCauseRecommendationCard({ formData, complaintId, onA
     setIsLoading(true);
     setError(null);
     setAppliedSuccess(false);
+
+    const hasEnoughData =
+      formData?.product_name?.trim() ||
+      formData?.description?.trim() ||
+      formData?.title?.trim() ||
+      formData?.batch_number?.trim();
+
+    if (!hasEnoughData && !complaintId) {
+      setIsLoading(false);
+      setError('Form is empty. Please enter a Product Name or Complaint Description before running Root Cause Analysis.');
+      return;
+    }
+
     try {
       let data;
       if (complaintId) {

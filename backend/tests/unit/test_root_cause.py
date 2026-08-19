@@ -47,3 +47,17 @@ async def test_root_cause_service_analyze():
     assert len(res.hypotheses) > 0
     assert len(res.investigation_checklist) > 0
     assert len(res.capa_recommendations) > 0
+
+
+@pytest.mark.anyio
+async def test_root_cause_service_empty_form_raises_value_error():
+    service = RootCauseService()
+    form_data = {
+        "product_name": "",
+        "batch_number": "",
+        "complaint_category": "",
+        "description": "",
+    }
+    with pytest.raises(ValueError, match="Complaint form is empty"):
+        await service.analyze_root_cause(form_data)
+

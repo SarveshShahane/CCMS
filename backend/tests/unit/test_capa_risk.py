@@ -50,3 +50,17 @@ async def test_capa_risk_service_evaluate():
     assert res.risk_classification.severity_level in ["CRITICAL", "MAJOR", "MINOR"]
     assert res.risk_classification.rpn_score > 0
     assert len(res.capa_plan) > 0
+
+
+@pytest.mark.anyio
+async def test_capa_risk_service_empty_form_raises_value_error():
+    service = CapaRiskService()
+    form_data = {
+        "product_name": "",
+        "batch_number": "",
+        "complaint_category": "",
+        "description": "",
+    }
+    with pytest.raises(ValueError, match="Complaint form is empty"):
+        await service.evaluate_capa_and_risk(form_data)
+
